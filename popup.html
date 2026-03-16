@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      width: 400px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 13px;
+      color: #333;
+      background: #f8f9fa;
+      padding: 16px;
+    }
+
+    /* ヘッダー */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #dee2e6;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .header img { width: 20px; height: 20px; }
+    .header h1 { font-size: 15px; font-weight: 600; color: #0D47A1; }
+    .header-right a {
+      font-size: 11px;
+      color: #888;
+      text-decoration: none;
+    }
+    .header-right a:hover { color: #0D47A1; }
+
+    /* モード切替タブ */
+    .mode-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 14px;
+    }
+    .mode-tab {
+      flex: 1;
+      padding: 7px 8px;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      background: #fff;
+      font-size: 12px;
+      font-weight: 500;
+      text-align: center;
+      cursor: pointer;
+      color: #555;
+      transition: all 0.2s;
+    }
+    .mode-tab:hover { background: #e8eaed; }
+    .mode-tab.active {
+      background: #0D47A1;
+      color: #fff;
+      border-color: #0D47A1;
+    }
+
+    /* ラベル */
+    label {
+      display: block;
+      font-weight: 600;
+      font-size: 12px;
+      color: #555;
+      margin-bottom: 4px;
+    }
+
+    /* 入力フィールド */
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #ced4da;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+      background: #fff;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus, textarea:focus {
+      outline: none;
+      border-color: #0D47A1;
+      box-shadow: 0 0 0 2px rgba(13, 71, 161, 0.15);
+    }
+    textarea { resize: vertical; min-height: 50px; }
+
+    .field-group { margin-bottom: 10px; }
+
+    /* URL表示 */
+    .url-display {
+      font-size: 11px;
+      color: #888;
+      word-break: break-all;
+      margin-top: 2px;
+    }
+
+    /* ボタン */
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    button {
+      flex: 1;
+      padding: 9px 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+    button:active { transform: scale(0.97); }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .btn-primary { background: #0D47A1; color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: #0a3a85; }
+    .btn-secondary { background: #e8eaed; color: #333; }
+    .btn-secondary:hover:not(:disabled) { background: #dadce0; }
+    .btn-web { background: #2979FF; color: #fff; }
+    .btn-web:hover:not(:disabled) { background: #1565C0; }
+
+    /* ステータス */
+    .status {
+      margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      display: none;
+    }
+    .status.success { display: block; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .status.error   { display: block; background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .status.info    { display: block; background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    .status.loading { display: block; background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+
+    /* 未設定警告 */
+    .warning-box {
+      padding: 10px;
+      background: #fff3cd;
+      border: 1px solid #ffeeba;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #856404;
+      margin-bottom: 12px;
+    }
+    .warning-box a { color: #0D47A1; font-weight: 600; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <!-- ヘッダー -->
+  <div class="header">
+    <div class="header-left">
+      <img src="icons/icon48.png" alt="icon">
+      <h1>Add to Toodledo</h1>
+    </div>
+    <div class="header-right">
+      <a href="#" id="openOptions">設定</a>
+    </div>
+  </div>
+
+  <!-- API未設定時の警告 -->
+  <div id="warningBox" class="warning-box hidden">
+    ⚠ API連携が未設定です。<a href="#" id="warningLink">設定画面</a>でClient IDを登録し、Toodledoと連携してください。<br>
+    または下の「Web版で追加」をご利用ください。
+  </div>
+
+  <!-- モード切替 -->
+  <div class="mode-tabs">
+    <div class="mode-tab active" data-mode="api">API で追加</div>
+    <div class="mode-tab" data-mode="web">Web版で追加</div>
+  </div>
+
+  <!-- タスク名 -->
+  <div class="field-group">
+    <label for="taskTitle">タスク名</label>
+    <input type="text" id="taskTitle" placeholder="タスク名を入力…">
+  </div>
+
+  <!-- ノート -->
+  <div class="field-group">
+    <label for="taskNote">ノート</label>
+    <textarea id="taskNote" placeholder="URL・選択テキストなど"></textarea>
+  </div>
+
+  <!-- タグ（API モードのみ） -->
+  <div class="field-group" id="tagGroup">
+    <label for="taskTag">タグ（カンマ区切り）</label>
+    <input type="text" id="taskTag" placeholder="例: chrome, web-clip">
+  </div>
+
+  <!-- 元URL -->
+  <div class="field-group">
+    <label>元ページ</label>
+    <div id="sourceUrl" class="url-display">—</div>
+  </div>
+
+  <!-- ボタン（APIモード） -->
+  <div class="btn-row" id="btnRowApi">
+    <button id="btnAddApi" class="btn-primary">タスクを追加</button>
+    <button id="btnCopyApi" class="btn-secondary">コピー</button>
+  </div>
+
+  <!-- ボタン（Webモード） -->
+  <div class="btn-row hidden" id="btnRowWeb">
+    <button id="btnOpenWeb" class="btn-web">Toodledo で追加</button>
+    <button id="btnCopyWeb" class="btn-secondary">コピー</button>
+  </div>
+
+  <!-- ステータス -->
+  <div id="status" class="status"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

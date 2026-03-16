@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Add to Toodledo — 設定</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      max-width: 640px;
+      margin: 40px auto;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 14px;
+      color: #333;
+      background: #f5f6fa;
+      padding: 0 20px;
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #0D47A1;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    h1 img { width: 28px; height: 28px; }
+    .subtitle {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 28px;
+    }
+
+    /* カード */
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .card h2 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #eee;
+    }
+
+    /* フォーム要素 */
+    label {
+      display: block;
+      font-weight: 600;
+      font-size: 12px;
+      color: #555;
+      margin-bottom: 4px;
+      margin-top: 12px;
+    }
+    label:first-child { margin-top: 0; }
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #ced4da;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: monospace;
+      background: #fafafa;
+    }
+    input:focus {
+      outline: none;
+      border-color: #0D47A1;
+      box-shadow: 0 0 0 2px rgba(13,71,161,0.12);
+    }
+    .help-text {
+      font-size: 11px;
+      color: #999;
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+    .help-text a {
+      color: #0D47A1;
+    }
+
+    /* ボタン */
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 18px;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    button:active { transform: scale(0.97); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-save { background: #0D47A1; color: #fff; }
+    .btn-save:hover:not(:disabled) { background: #0a3a85; }
+    .btn-auth { background: #2979FF; color: #fff; }
+    .btn-auth:hover:not(:disabled) { background: #1565C0; }
+    .btn-danger { background: #dc3545; color: #fff; }
+    .btn-danger:hover:not(:disabled) { background: #c82333; }
+    .btn-test { background: #28a745; color: #fff; }
+    .btn-test:hover:not(:disabled) { background: #218838; }
+
+    /* ステータス */
+    .status {
+      margin-top: 14px;
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      display: none;
+    }
+    .status.success { display: block; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .status.error   { display: block; background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .status.info    { display: block; background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    .status.loading { display: block; background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+
+    /* 接続状態バッジ */
+    .connection-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-connected {
+      background: #d4edda;
+      color: #155724;
+    }
+    .badge-disconnected {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .badge-connected .badge-dot { background: #28a745; }
+    .badge-disconnected .badge-dot { background: #dc3545; }
+
+    /* リダイレクトURI表示 */
+    .redirect-uri {
+      padding: 8px 12px;
+      background: #f0f0f0;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 12px;
+      word-break: break-all;
+      margin-top: 6px;
+      cursor: pointer;
+      border: 1px dashed #ccc;
+    }
+    .redirect-uri:hover { background: #e8e8e8; }
+
+    /* 手順リスト */
+    .steps {
+      margin-top: 10px;
+      padding-left: 20px;
+    }
+    .steps li {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 6px;
+      line-height: 1.5;
+    }
+    .steps li a {
+      color: #0D47A1;
+    }
+  </style>
+</head>
+<body>
+  <h1><img src="icons/icon48.png" alt="">Add to Toodledo — 設定</h1>
+  <p class="subtitle">Toodledo APIとの連携設定を管理します。</p>
+
+  <!-- 接続状態 -->
+  <div class="card">
+    <h2>接続状態</h2>
+    <div id="connectionStatus">
+      <span class="connection-badge badge-disconnected">
+        <span class="badge-dot"></span>未接続
+      </span>
+    </div>
+    <div id="accountInfo" style="margin-top: 8px; font-size: 12px; color: #666;"></div>
+  </div>
+
+  <!-- API設定 -->
+  <div class="card">
+    <h2>API 設定</h2>
+    <p class="help-text" style="margin-bottom: 10px;">
+      Toodledo API を利用するには、アプリを登録して Client ID と Secret を取得する必要があります。
+    </p>
+    <ol class="steps">
+      <li><a href="https://api.toodledo.com/3/account/doc_register.php" target="_blank">Toodledo API 登録ページ</a>を開き、サインインします。</li>
+      <li>アプリ名（例: "My Chrome Extension"）と説明を入力します。</li>
+      <li><strong>Redirect URI</strong> に下記の値を設定します（クリックでコピー）:</li>
+    </ol>
+    <div id="redirectUri" class="redirect-uri" title="クリックでコピー">読み込み中…</div>
+    <p class="help-text" style="margin-top: 6px;">
+      ↑ このURLはChrome拡張のIDに基づいて自動生成されます。
+    </p>
+    <ol class="steps" start="4">
+      <li>登録後に表示される <strong>Client ID</strong> と <strong>Client Secret</strong> を下に入力してください。</li>
+    </ol>
+
+    <label for="clientId">Client ID</label>
+    <input type="text" id="clientId" placeholder="Toodledo Client ID">
+
+    <label for="clientSecret">Client Secret</label>
+    <input type="password" id="clientSecret" placeholder="Toodledo Client Secret">
+    <p class="help-text">Client Secretはブラウザのローカルストレージに保存されます。</p>
+
+    <label for="defaultTag">デフォルトタグ（任意）</label>
+    <input type="text" id="defaultTag" placeholder="例: chrome, web-clip">
+    <p class="help-text">タスク追加時に自動でセットされるタグです。</p>
+
+    <div class="btn-group">
+      <button id="btnSave" class="btn-save">設定を保存</button>
+      <button id="btnAuth" class="btn-auth" disabled>Toodledoと連携</button>
+    </div>
+    <div id="saveStatus" class="status"></div>
+  </div>
+
+  <!-- 接続テスト / ログアウト -->
+  <div class="card">
+    <h2>接続管理</h2>
+    <div class="btn-group">
+      <button id="btnTest" class="btn-test">接続テスト</button>
+      <button id="btnLogout" class="btn-danger">ログアウト</button>
+    </div>
+    <div id="testStatus" class="status"></div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
