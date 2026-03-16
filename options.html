@@ -232,6 +232,16 @@
     </select>
     <p class="help-text">タスク追加時のデフォルト優先度です。</p>
 
+    <label for="defaultDueDate">デフォルト期日（任意）</label>
+    <select id="defaultDueDate" style="width:100%;padding:9px 12px;border:1px solid #ced4da;border-radius:6px;font-size:13px;background:#fafafa;">
+      <option value="none" selected>なし</option>
+      <option value="today">Today</option>
+      <option value="tomorrow">Tomorrow</option>
+      <option value="1week">In 1 Week</option>
+      <option value="1month">In 1 Month</option>
+    </select>
+    <p class="help-text">ポップアップを開いたときに自動セットされる期日です。</p>
+
     <div class="btn-group">
       <button id="btnSave" class="btn-save">設定を保存</button>
       <button id="btnAuth" class="btn-auth" disabled>Toodledoと連携</button>

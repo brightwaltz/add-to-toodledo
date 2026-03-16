@@ -121,6 +121,29 @@
       margin-right: 4px;
     }
 
+    /* ★ スタートグル */
+    .star-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .star-toggle .star-icon {
+      font-size: 20px;
+      line-height: 1;
+      transition: transform 0.15s;
+    }
+    .star-toggle:hover .star-icon { transform: scale(1.2); }
+    .star-toggle .star-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #555;
+    }
+    .star-toggle.active .star-icon { color: #f5a623; }
+    .star-toggle:not(.active) .star-icon { color: #ccc; }
+
     .field-group { margin-bottom: 10px; }
 
     /* URL表示 */
@@ -222,6 +245,12 @@
   <div class="field-group">
     <label for="taskNote">ノート</label>
     <textarea id="taskNote" placeholder="URL・選択テキストなど"></textarea>
+  </div>
+
+  <!-- ★ スタートグル（APIモードのみ） -->
+  <div class="star-toggle" id="starToggle" title="スターを付ける">
+    <span class="star-icon">★</span>
+    <span class="star-label">スター</span>
   </div>
 
   <!-- 期日・優先度（横並び、APIモードのみ） -->

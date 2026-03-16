@@ -47,7 +47,8 @@ async function handleMessage(request) {
         request.note,
         request.tag,
         request.duedate,
-        request.priority
+        request.priority,
+        request.star
       );
 
       // 成功通知

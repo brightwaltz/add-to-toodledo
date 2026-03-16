@@ -209,9 +209,10 @@ async function getValidAccessToken() {
  * @param {string} tag - タグ（任意）
  * @param {string} duedate - 期日 'YYYY-MM-DD'（任意）
  * @param {string} priority - 優先度 '-1'〜'3'（任意）
+ * @param {number} star - スター 0 or 1（任意）
  * @returns {object} 追加されたタスク情報
  */
-async function addTask(title, note = '', tag = '', duedate = '', priority = '') {
+async function addTask(title, note = '', tag = '', duedate = '', priority = '', star = 0) {
   const accessToken = await getValidAccessToken();
 
   // タスクオブジェクトを組み立て
@@ -230,6 +231,11 @@ async function addTask(title, note = '', tag = '', duedate = '', priority = '') 
   // 優先度: -1(なし), 0(Low), 1(Medium), 2(High), 3(Top)
   if (priority !== '' && priority !== undefined) {
     task.priority = parseInt(priority);
+  }
+
+  // スター: 0(なし) or 1(あり)
+  if (star) {
+    task.star = 1;
   }
 
   const tasksJson = JSON.stringify([task]);

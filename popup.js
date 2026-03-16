@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const taskTagEl = document.getElementById('taskTag');
   const taskDueDateEl = document.getElementById('taskDueDate');
   const taskPriorityEl = document.getElementById('taskPriority');
+  const starToggleEl = document.getElementById('starToggle');
   const sourceUrlEl = document.getElementById('sourceUrl');
   const statusEl = document.getElementById('status');
   const warningBox = document.getElementById('warningBox');
@@ -84,14 +85,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   sourceUrlEl.textContent = tabUrl || '（取得不可）';
 
-  // デフォルトタグ・デフォルト優先度を読み込む
-  chrome.storage.local.get(['defaultTag', 'defaultPriority'], (data) => {
+  // デフォルトタグ・デフォルト優先度・デフォルト期日を読み込む
+  chrome.storage.local.get(['defaultTag', 'defaultPriority', 'defaultDueDate'], (data) => {
     if (data.defaultTag) {
       taskTagEl.value = data.defaultTag;
     }
     if (data.defaultPriority !== undefined && data.defaultPriority !== '') {
       taskPriorityEl.value = data.defaultPriority;
     }
+    // デフォルト期日: today / tomorrow / 1week / 1month → 実際の日付に変換
+    if (data.defaultDueDate && data.defaultDueDate !== 'none') {
+      taskDueDateEl.value = calcDefaultDate(data.defaultDueDate);
+    }
+  });
+
+  // === スタートグル ===
+  starToggleEl.addEventListener('click', () => {
+    starToggleEl.classList.toggle('active');
   });
 
   // === モード切替 ===
@@ -110,11 +120,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       btnRowWeb.classList.add('hidden');
       tagGroup.classList.remove('hidden');
       duePriorityRow.classList.remove('hidden');
+      starToggleEl.classList.remove('hidden');
     } else {
       btnRowApi.classList.add('hidden');
       btnRowWeb.classList.remove('hidden');
       tagGroup.classList.add('hidden');
       duePriorityRow.classList.add('hidden');
+      starToggleEl.classList.add('hidden');
     }
   }
 
@@ -125,6 +137,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tag = taskTagEl.value.trim();
     const duedate = taskDueDateEl.value; // 'YYYY-MM-DD' または空文字列
     const priority = taskPriorityEl.value; // '-1' 〜 '3'
+    const star = starToggleEl.classList.contains('active') ? 1 : 0;
 
     if (!title) {
       showStatus('タスク名を入力してください。', 'error');
@@ -145,6 +158,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         tag,
         duedate,
         priority,
+        star,
       });
 
       if (result.success) {
@@ -225,6 +239,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       });
     });
+  }
+
+  /**
+   * デフォルト期日のキーを実際の日付文字列 (YYYY-MM-DD) に変換
+   */
+  function calcDefaultDate(key) {
+    const d = new Date();
+    switch (key) {
+      case 'today':
+        break; // そのまま
+      case 'tomorrow':
+        d.setDate(d.getDate() + 1);
+        break;
+      case '1week':
+        d.setDate(d.getDate() + 7);
+        break;
+      case '1month':
+        d.setMonth(d.getMonth() + 1);
+        break;
+      default:
+        return ''; // 'none' やその他
+    }
+    // YYYY-MM-DD 形式にフォーマット
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   }
 
   // フォーカス
