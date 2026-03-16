@@ -42,7 +42,13 @@ async function handleMessage(request) {
 
     // === タスク追加 ===
     case 'addTask': {
-      const result = await addTask(request.title, request.note, request.tag);
+      const result = await addTask(
+        request.title,
+        request.note,
+        request.tag,
+        request.duedate,
+        request.priority
+      );
 
       // 成功通知
       showNotification('タスク追加完了', `「${request.title}」を追加しました。`);

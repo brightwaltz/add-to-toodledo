@@ -5,10 +5,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   const taskTitleEl = document.getElementById('taskTitle');
   const taskNoteEl = document.getElementById('taskNote');
   const taskTagEl = document.getElementById('taskTag');
+  const taskDueDateEl = document.getElementById('taskDueDate');
+  const taskPriorityEl = document.getElementById('taskPriority');
   const sourceUrlEl = document.getElementById('sourceUrl');
   const statusEl = document.getElementById('status');
   const warningBox = document.getElementById('warningBox');
   const tagGroup = document.getElementById('tagGroup');
+  const duePriorityRow = document.getElementById('duePriorityRow');
 
   // ボタン群
   const btnRowApi = document.getElementById('btnRowApi');
@@ -81,10 +84,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   sourceUrlEl.textContent = tabUrl || '（取得不可）';
 
-  // デフォルトタグを読み込む
-  chrome.storage.local.get(['defaultTag'], (data) => {
+  // デフォルトタグ・デフォルト優先度を読み込む
+  chrome.storage.local.get(['defaultTag', 'defaultPriority'], (data) => {
     if (data.defaultTag) {
       taskTagEl.value = data.defaultTag;
+    }
+    if (data.defaultPriority !== undefined && data.defaultPriority !== '') {
+      taskPriorityEl.value = data.defaultPriority;
     }
   });
 
@@ -103,10 +109,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       btnRowApi.classList.remove('hidden');
       btnRowWeb.classList.add('hidden');
       tagGroup.classList.remove('hidden');
+      duePriorityRow.classList.remove('hidden');
     } else {
       btnRowApi.classList.add('hidden');
       btnRowWeb.classList.remove('hidden');
       tagGroup.classList.add('hidden');
+      duePriorityRow.classList.add('hidden');
     }
   }
 
@@ -115,6 +123,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const title = taskTitleEl.value.trim();
     const note = taskNoteEl.value.trim();
     const tag = taskTagEl.value.trim();
+    const duedate = taskDueDateEl.value; // 'YYYY-MM-DD' または空文字列
+    const priority = taskPriorityEl.value; // '-1' 〜 '3'
 
     if (!title) {
       showStatus('タスク名を入力してください。', 'error');
@@ -133,6 +143,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         title,
         note,
         tag,
+        duedate,
+        priority,
       });
 
       if (result.success) {

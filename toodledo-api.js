@@ -207,15 +207,30 @@ async function getValidAccessToken() {
  * @param {string} title - タスク名（必須）
  * @param {string} note - ノート（任意）
  * @param {string} tag - タグ（任意）
+ * @param {string} duedate - 期日 'YYYY-MM-DD'（任意）
+ * @param {string} priority - 優先度 '-1'〜'3'（任意）
  * @returns {object} 追加されたタスク情報
  */
-async function addTask(title, note = '', tag = '') {
+async function addTask(title, note = '', tag = '', duedate = '', priority = '') {
   const accessToken = await getValidAccessToken();
 
   // タスクオブジェクトを組み立て
   const task = { title };
   if (note) task.note = note;
   if (tag) task.tag = tag;
+
+  // 期日: Toodledo APIはGMT Unixタイムスタンプ（日付のみの場合はその日の正午）を期待
+  if (duedate) {
+    // 'YYYY-MM-DD' → Unixタイムスタンプ（GMT正午）
+    const parts = duedate.split('-');
+    const d = new Date(Date.UTC(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 12, 0, 0));
+    task.duedate = Math.floor(d.getTime() / 1000);
+  }
+
+  // 優先度: -1(なし), 0(Low), 1(Medium), 2(High), 3(Top)
+  if (priority !== '' && priority !== undefined) {
+    task.priority = parseInt(priority);
+  }
 
   const tasksJson = JSON.stringify([task]);
   console.log('[Add to Toodledo] タスク追加リクエスト:', tasksJson);

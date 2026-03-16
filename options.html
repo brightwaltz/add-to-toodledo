@@ -222,6 +222,16 @@
     <input type="text" id="defaultTag" placeholder="例: chrome, web-clip">
     <p class="help-text">タスク追加時に自動でセットされるタグです。</p>
 
+    <label for="defaultPriority">デフォルト優先度（任意）</label>
+    <select id="defaultPriority" style="width:100%;padding:9px 12px;border:1px solid #ced4da;border-radius:6px;font-size:13px;background:#fafafa;">
+      <option value="-1">なし (Negative)</option>
+      <option value="0" selected>低 (Low)</option>
+      <option value="1">中 (Medium)</option>
+      <option value="2">高 (High)</option>
+      <option value="3">最高 (Top)</option>
+    </select>
+    <p class="help-text">タスク追加時のデフォルト優先度です。</p>
+
     <div class="btn-group">
       <button id="btnSave" class="btn-save">設定を保存</button>
       <button id="btnAuth" class="btn-auth" disabled>Toodledoと連携</button>

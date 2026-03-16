@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const clientIdEl = document.getElementById('clientId');
   const clientSecretEl = document.getElementById('clientSecret');
   const defaultTagEl = document.getElementById('defaultTag');
+  const defaultPriorityEl = document.getElementById('defaultPriority');
   const redirectUriEl = document.getElementById('redirectUri');
   const connectionStatusEl = document.getElementById('connectionStatus');
   const accountInfoEl = document.getElementById('accountInfo');
@@ -32,11 +33,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // === 保存済みの設定を読み込み ===
   chrome.storage.local.get(
-    ['clientId', 'clientSecret', 'defaultTag'],
+    ['clientId', 'clientSecret', 'defaultTag', 'defaultPriority'],
     (data) => {
       if (data.clientId) clientIdEl.value = data.clientId;
       if (data.clientSecret) clientSecretEl.value = data.clientSecret;
       if (data.defaultTag) defaultTagEl.value = data.defaultTag;
+      // デフォルト優先度を復元（保存値がある場合のみ上書き）
+      if (data.defaultPriority !== undefined && data.defaultPriority !== '') {
+        defaultPriorityEl.value = data.defaultPriority;
+      }
 
       // Client ID/Secretが設定済みなら「連携」ボタンを有効化
       if (data.clientId && data.clientSecret) {
@@ -53,13 +58,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const clientId = clientIdEl.value.trim();
     const clientSecret = clientSecretEl.value.trim();
     const defaultTag = defaultTagEl.value.trim();
+    const defaultPriority = defaultPriorityEl.value; // 選択された優先度
 
     if (!clientId || !clientSecret) {
       showStatus(saveStatusEl, 'Client IDとClient Secretの両方を入力してください。', 'error');
       return;
     }
 
-    chrome.storage.local.set({ clientId, clientSecret, defaultTag }, () => {
+    chrome.storage.local.set({ clientId, clientSecret, defaultTag, defaultPriority }, () => {
       showStatus(saveStatusEl, '✓ 設定を保存しました。', 'success');
       btnAuth.disabled = false;
     });
