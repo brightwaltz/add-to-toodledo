@@ -103,6 +103,9 @@ async function exchangeCodeForToken(code, clientId, clientSecret) {
   // Basic認証ヘッダー: client_id:client_secret をBase64エンコード
   const credentials = btoa(`${clientId}:${clientSecret}`);
 
+  // ★ redirect_uriをトークン交換時にも送る必要がある（OAuth2仕様）
+  const redirectUrl = chrome.identity.getRedirectURL();
+
   const response = await fetch(TOODLEDO.TOKEN_URL, {
     method: 'POST',
     headers: {
@@ -112,6 +115,7 @@ async function exchangeCodeForToken(code, clientId, clientSecret) {
     body: new URLSearchParams({
       grant_type: 'authorization_code',
       code: code,
+      redirect_uri: redirectUrl,
       device: 'chrome_extension',
     }).toString(),
   });
