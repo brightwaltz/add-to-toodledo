@@ -205,6 +205,9 @@ async function addTask(title, note = '', tag = '') {
   if (note) task.note = note;
   if (tag) task.tag = tag;
 
+  const tasksJson = JSON.stringify([task]);
+  console.log('[Add to Toodledo] タスク追加リクエスト:', tasksJson);
+
   const response = await fetch(TOODLEDO.ADD_TASK_URL, {
     method: 'POST',
     headers: {
@@ -212,27 +215,49 @@ async function addTask(title, note = '', tag = '') {
     },
     body: new URLSearchParams({
       access_token: accessToken,
-      tasks: JSON.stringify([task]),
+      tasks: tasksJson,
     }).toString(),
   });
 
-  const data = await response.json();
+  const responseText = await response.text();
+  console.log('[Add to Toodledo] APIレスポンス (raw):', responseText);
+  console.log('[Add to Toodledo] HTTPステータス:', response.status);
 
-  // エラーチェック（配列の各要素にerrorCodeがある場合）
-  if (Array.isArray(data)) {
-    const result = data[0];
-    if (result.errorCode) {
-      throw new Error(`タスク追加エラー: ${result.errorDesc || result.errorCode}`);
+  let data;
+  try {
+    data = JSON.parse(responseText);
+  } catch (e) {
+    throw new Error(`APIレスポンスのパースに失敗: ${responseText.substring(0, 200)}`);
+  }
+
+  console.log('[Add to Toodledo] APIレスポンス (parsed):', JSON.stringify(data));
+
+  // トップレベルエラー（オブジェクトとして返る場合）
+  if (!Array.isArray(data)) {
+    if (data.errorCode) {
+      throw new Error(`APIエラー (${data.errorCode}): ${data.errorDesc || '不明なエラー'}`);
     }
-    return result;
+    // 想定外の形式だが、idがあれば成功とみなす
+    if (data.id) return data;
+    throw new Error(`想定外のレスポンス形式: ${JSON.stringify(data).substring(0, 200)}`);
   }
 
-  // トップレベルエラー
-  if (data.errorCode) {
-    throw new Error(`APIエラー: ${data.errorDesc || data.errorCode}`);
+  // 配列形式: 各要素をチェック
+  if (data.length === 0) {
+    throw new Error('APIから空のレスポンスが返されました');
   }
 
-  return data;
+  const result = data[0];
+  if (result.errorCode) {
+    throw new Error(`タスク追加エラー (${result.errorCode}): ${result.errorDesc || '不明なエラー'}`);
+  }
+
+  // 成功: idフィールドがあるか確認
+  if (!result.id) {
+    throw new Error(`タスクIDが返されませんでした: ${JSON.stringify(result)}`);
+  }
+
+  return result;
 }
 
 /**

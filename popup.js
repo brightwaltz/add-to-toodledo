@@ -136,11 +136,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
       if (result.success) {
-        showStatus(`✓ タスク「${title}」を追加しました！（ID: ${result.task.id}）`, 'success');
+        const taskId = result.task?.id || '(ID不明)';
+        showStatus(`✓ タスク「${title}」を追加しました！（ID: ${taskId}）`, 'success');
+        console.log('[Add to Toodledo] タスク追加結果:', JSON.stringify(result));
         // 成功後、2秒でポップアップを閉じる
         setTimeout(() => window.close(), 2000);
       } else {
         showStatus(`エラー: ${result.error}`, 'error');
+        console.error('[Add to Toodledo] エラー詳細:', JSON.stringify(result));
       }
     } catch (e) {
       showStatus(`エラー: ${e.message}`, 'error');
