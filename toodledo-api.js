@@ -56,12 +56,20 @@ async function getAuthorizationCode(clientId) {
   // state パラメータ（CSRF対策用ランダム文字列）
   const state = crypto.randomUUID();
 
+  // Chrome拡張のRedirect URIを取得
+  // このURLはToodledoのアプリ登録時に設定したRedirect URIと一致している必要がある
   const redirectUrl = chrome.identity.getRedirectURL();
+  console.log('[Add to Toodledo] Redirect URI:', redirectUrl);
+
   const authUrl = new URL(TOODLEDO.AUTH_URL);
   authUrl.searchParams.set('response_type', 'code');
   authUrl.searchParams.set('client_id', clientId);
   authUrl.searchParams.set('state', state);
   authUrl.searchParams.set('scope', 'basic tasks write');
+  // ★ 重要: redirect_uriを明示的に渡すことで、Toodledoがchromiumapp.orgにリダイレクトする
+  authUrl.searchParams.set('redirect_uri', redirectUrl);
+
+  console.log('[Add to Toodledo] Auth URL:', authUrl.toString());
 
   // launchWebAuthFlow でブラウザの認証ウィンドウを開く
   const responseUrl = await chrome.identity.launchWebAuthFlow({
