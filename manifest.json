@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Add to Toodledo",
-  "version": "2.2.0",
-  "description": "現在のタブのタイトル・URL・選択テキストからToodledoにタスクを追加します。API連携版。",
+  "version": "3.0.0",
+  "description": "現在のタブのタイトル・URL・選択テキストからToodledoにタスクを追加します。Free/Pro対応。",
   "permissions": [
     "activeTab",
     "scripting",
@@ -36,6 +36,11 @@
       "matches": ["<all_urls>"],
       "js": ["content.js"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://extensionpay.com/*"],
+      "js": ["ExtPay.js"],
+      "run_at": "document_start"
     }
   ]
 }

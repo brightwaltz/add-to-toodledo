@@ -1,4 +1,4 @@
-// options.js — 設定画面のロジック
+// options.js — 設定画面のロジック（v3: Free/Pro対応）
 
 document.addEventListener('DOMContentLoaded', async () => {
   // === DOM要素 ===
@@ -12,11 +12,41 @@ document.addEventListener('DOMContentLoaded', async () => {
   const accountInfoEl = document.getElementById('accountInfo');
   const saveStatusEl = document.getElementById('saveStatus');
   const testStatusEl = document.getElementById('testStatus');
+  const proSaveStatusEl = document.getElementById('proSaveStatus');
+
+  // ライセンス関連
+  const licensePlanEl = document.getElementById('licensePlan');
+  const licenseDetailEl = document.getElementById('licenseDetail');
+  const btnUpgradeOpt = document.getElementById('btnUpgradeOpt');
+  const btnLogin = document.getElementById('btnLogin');
+  const proSettingsCard = document.getElementById('proSettingsCard');
 
   const btnSave = document.getElementById('btnSave');
+  const btnSavePro = document.getElementById('btnSavePro');
   const btnAuth = document.getElementById('btnAuth');
   const btnTest = document.getElementById('btnTest');
   const btnLogout = document.getElementById('btnLogout');
+
+  // === ライセンス状態を確認 ===
+  let userIsPro = false;
+  try {
+    const licenseResult = await sendMessage({ action: 'getLicenseStatus' });
+    userIsPro = licenseResult.isPro === true;
+    applyLicenseUI(userIsPro, licenseResult);
+  } catch (e) {
+    console.warn('[options] ライセンス確認失敗:', e.message);
+    applyLicenseUI(false, {});
+  }
+
+  // アップグレードボタン
+  btnUpgradeOpt.addEventListener('click', () => {
+    openUpgradePage();
+  });
+
+  // 既存Proユーザーのログイン
+  btnLogin.addEventListener('click', () => {
+    openLoginPage();
+  });
 
   // === Redirect URI を表示 ===
   const redirectUrl = chrome.identity.getRedirectURL();
@@ -39,11 +69,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (data.clientId) clientIdEl.value = data.clientId;
       if (data.clientSecret) clientSecretEl.value = data.clientSecret;
       if (data.defaultTag) defaultTagEl.value = data.defaultTag;
-      // デフォルト優先度を復元（保存値がある場合のみ上書き）
       if (data.defaultPriority !== undefined && data.defaultPriority !== '') {
         defaultPriorityEl.value = data.defaultPriority;
       }
-      // デフォルト期日を復元
       if (data.defaultDueDate) {
         defaultDueDateEl.value = data.defaultDueDate;
       }
@@ -58,22 +86,34 @@ document.addEventListener('DOMContentLoaded', async () => {
   // === 接続状態を確認 ===
   await checkConnectionStatus();
 
-  // === 設定保存 ===
+  // === API設定保存 ===
   btnSave.addEventListener('click', () => {
     const clientId = clientIdEl.value.trim();
     const clientSecret = clientSecretEl.value.trim();
     const defaultTag = defaultTagEl.value.trim();
-    const defaultPriority = defaultPriorityEl.value; // 選択された優先度
-    const defaultDueDate = defaultDueDateEl.value;   // 選択されたデフォルト期日
 
     if (!clientId || !clientSecret) {
       showStatus(saveStatusEl, 'Client IDとClient Secretの両方を入力してください。', 'error');
       return;
     }
 
-    chrome.storage.local.set({ clientId, clientSecret, defaultTag, defaultPriority, defaultDueDate }, () => {
+    chrome.storage.local.set({ clientId, clientSecret, defaultTag }, () => {
       showStatus(saveStatusEl, '✓ 設定を保存しました。', 'success');
       btnAuth.disabled = false;
+    });
+  });
+
+  // === Pro限定: デフォルト設定保存 ===
+  btnSavePro.addEventListener('click', () => {
+    if (!userIsPro) {
+      showStatus(proSaveStatusEl, 'この機能はProプランで利用できます。', 'error');
+      return;
+    }
+    const defaultPriority = defaultPriorityEl.value;
+    const defaultDueDate = defaultDueDateEl.value;
+
+    chrome.storage.local.set({ defaultPriority, defaultDueDate }, () => {
+      showStatus(proSaveStatusEl, '✓ デフォルト設定を保存しました。', 'success');
     });
   });
 
@@ -136,6 +176,41 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // === ヘルパー関数 ===
+
+  /**
+   * ライセンス状態をUIに反映
+   */
+  function applyLicenseUI(isPro, licenseResult) {
+    if (isPro) {
+      licensePlanEl.textContent = 'Pro プラン';
+      licensePlanEl.className = 'license-plan pro';
+
+      // サブスク状態の表示
+      const email = licenseResult.email || '';
+      let detail = email ? `アカウント: ${email}` : 'Pro 機能がすべて有効です';
+      if (licenseResult.subscriptionCancelAt) {
+        const cancelDate = new Date(licenseResult.subscriptionCancelAt);
+        detail += ` ・ ${cancelDate.toLocaleDateString('ja-JP')} に終了予定`;
+      }
+      licenseDetailEl.textContent = detail;
+
+      // アップグレードボタン → サブスク管理ボタンに変更
+      btnUpgradeOpt.textContent = 'サブスクリプション管理';
+      btnUpgradeOpt.className = 'btn-manage';
+      btnLogin.classList.add('hidden');
+
+      // Pro設定セクションのロック解除
+      proSettingsCard.classList.remove('pro-section-locked');
+    } else {
+      licensePlanEl.textContent = 'Free プラン';
+      licensePlanEl.className = 'license-plan free';
+      licenseDetailEl.textContent = 'タスク名・ノートのみ利用可能。Pro でタグ・期日・優先度・スターが使えます。';
+      btnLogin.classList.remove('hidden');
+
+      // Pro設定セクションをロック
+      proSettingsCard.classList.add('pro-section-locked');
+    }
+  }
 
   async function checkConnectionStatus() {
     try {

@@ -1,4 +1,4 @@
-// popup.js — ポップアップのメインロジック（段階2: API連携 + Web版フォールバック）
+// popup.js — ポップアップのメインロジック（v3: Free/Pro対応）
 
 document.addEventListener('DOMContentLoaded', async () => {
   // === DOM要素 ===
@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const warningBox = document.getElementById('warningBox');
   const tagGroup = document.getElementById('tagGroup');
   const duePriorityRow = document.getElementById('duePriorityRow');
+  const planBadge = document.getElementById('planBadge');
+  const upgradeBanner = document.getElementById('upgradeBanner');
+  const btnUpgrade = document.getElementById('btnUpgrade');
 
   // ボタン群
   const btnRowApi = document.getElementById('btnRowApi');
@@ -33,6 +36,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('warningLink')?.addEventListener('click', (e) => {
     e.preventDefault();
     chrome.runtime.openOptionsPage();
+  });
+
+  // === Pro判定 ===
+  let userIsPro = false;
+  try {
+    const licenseResult = await sendMessage({ action: 'getLicenseStatus' });
+    userIsPro = licenseResult.isPro === true;
+  } catch (e) {
+    console.warn('[popup] ライセンス確認失敗:', e.message);
+  }
+
+  // === Pro/Free UIの切り替え ===
+  applyProUI(userIsPro);
+
+  // アップグレードボタン
+  btnUpgrade.addEventListener('click', () => {
+    openUpgradePage();
   });
 
   // === 現在のモード ===
@@ -85,22 +105,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   sourceUrlEl.textContent = tabUrl || '（取得不可）';
 
-  // デフォルトタグ・デフォルト優先度・デフォルト期日を読み込む
-  chrome.storage.local.get(['defaultTag', 'defaultPriority', 'defaultDueDate'], (data) => {
-    if (data.defaultTag) {
-      taskTagEl.value = data.defaultTag;
-    }
-    if (data.defaultPriority !== undefined && data.defaultPriority !== '') {
-      taskPriorityEl.value = data.defaultPriority;
-    }
-    // デフォルト期日: today / tomorrow / 1week / 1month → 実際の日付に変換
-    if (data.defaultDueDate && data.defaultDueDate !== 'none') {
-      taskDueDateEl.value = calcDefaultDate(data.defaultDueDate);
-    }
-  });
+  // デフォルトタグ・デフォルト優先度・デフォルト期日を読み込む（Pro時のみ有効）
+  if (userIsPro) {
+    chrome.storage.local.get(['defaultTag', 'defaultPriority', 'defaultDueDate'], (data) => {
+      if (data.defaultTag) {
+        taskTagEl.value = data.defaultTag;
+      }
+      if (data.defaultPriority !== undefined && data.defaultPriority !== '') {
+        taskPriorityEl.value = data.defaultPriority;
+      }
+      // デフォルト期日: today / tomorrow / 1week / 1month → 実際の日付に変換
+      if (data.defaultDueDate && data.defaultDueDate !== 'none') {
+        taskDueDateEl.value = calcDefaultDate(data.defaultDueDate);
+      }
+    });
+  }
 
-  // === スタートグル ===
+  // === スタートグル（Pro限定） ===
   starToggleEl.addEventListener('click', () => {
+    if (!userIsPro) return; // Freeではスター操作不可
     starToggleEl.classList.toggle('active');
   });
 
@@ -134,10 +157,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   btnAddApi.addEventListener('click', async () => {
     const title = taskTitleEl.value.trim();
     const note = taskNoteEl.value.trim();
-    const tag = taskTagEl.value.trim();
-    const duedate = taskDueDateEl.value; // 'YYYY-MM-DD' または空文字列
-    const priority = taskPriorityEl.value; // '-1' 〜 '3'
-    const star = starToggleEl.classList.contains('active') ? 1 : 0;
+
+    // Pro限定フィールド: Free版では空/デフォルト値を送信
+    const tag = userIsPro ? taskTagEl.value.trim() : '';
+    const duedate = userIsPro ? taskDueDateEl.value : '';
+    const priority = userIsPro ? taskPriorityEl.value : '';
+    const star = (userIsPro && starToggleEl.classList.contains('active')) ? 1 : 0;
 
     if (!title) {
       showStatus('タスク名を入力してください。', 'error');
@@ -219,6 +244,37 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   btnCopyApi.addEventListener('click', handleCopy);
   btnCopyWeb.addEventListener('click', handleCopy);
+
+  // === Pro/Free UI反映 ===
+  function applyProUI(isPro) {
+    // PRO タグの表示/非表示
+    const proTags = document.querySelectorAll('.pro-tag');
+
+    if (isPro) {
+      // Pro版: バッジ変更、バナー非表示、ロック解除
+      planBadge.textContent = 'PRO';
+      planBadge.className = 'pro-badge';
+      upgradeBanner.classList.add('hidden');
+
+      // PROタグを非表示
+      proTags.forEach((t) => (t.style.display = 'none'));
+
+      // ロック解除
+      starToggleEl.classList.remove('pro-locked');
+      duePriorityRow.classList.remove('pro-locked');
+      tagGroup.classList.remove('pro-locked');
+    } else {
+      // Free版: バッジ表示、バナー表示、Pro機能をロック
+      planBadge.textContent = 'FREE';
+      planBadge.className = 'free-badge';
+      upgradeBanner.classList.remove('hidden');
+
+      // Pro機能フィールドをロック（半透明 + 操作不可）
+      starToggleEl.classList.add('pro-locked');
+      duePriorityRow.classList.add('pro-locked');
+      tagGroup.classList.add('pro-locked');
+    }
+  }
 
   // === ヘルパー関数 ===
   function showStatus(message, type) {

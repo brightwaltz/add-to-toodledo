@@ -33,12 +33,35 @@
     }
     .header img { width: 20px; height: 20px; }
     .header h1 { font-size: 15px; font-weight: 600; color: #0D47A1; }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
     .header-right a {
       font-size: 11px;
       color: #888;
       text-decoration: none;
     }
     .header-right a:hover { color: #0D47A1; }
+    /* Pro バッジ */
+    .pro-badge {
+      font-size: 10px;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(135deg, #f5a623, #e8871e);
+      padding: 2px 7px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    .free-badge {
+      font-size: 10px;
+      font-weight: 600;
+      color: #888;
+      background: #e8eaed;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
 
     /* モード切替タブ */
     .mode-tabs {
@@ -110,15 +133,6 @@
       background-repeat: no-repeat;
       background-position: right 10px center;
       padding-right: 28px;
-    }
-
-    /* 優先度バッジ色 */
-    .priority-indicator {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      margin-right: 4px;
     }
 
     /* ★ スタートグル */
@@ -209,6 +223,61 @@
     .warning-box a { color: #0D47A1; font-weight: 600; }
 
     .hidden { display: none !important; }
+
+    /* === Pro ゲート: ロック表示 === */
+    .pro-locked {
+      position: relative;
+    }
+    .pro-locked::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(248, 249, 250, 0.65);
+      border-radius: 6px;
+      pointer-events: none;
+    }
+    .pro-locked input,
+    .pro-locked select,
+    .pro-locked .star-toggle {
+      pointer-events: none;
+      opacity: 0.5;
+    }
+
+    /* アップグレードバナー */
+    .upgrade-banner {
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      background: linear-gradient(135deg, #fff8e1, #fff3cd);
+      border: 1px solid #ffe082;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .upgrade-banner-text {
+      font-size: 12px;
+      color: #6d4c00;
+      line-height: 1.4;
+    }
+    .upgrade-banner-text strong { color: #e8871e; }
+    .btn-upgrade {
+      flex-shrink: 0;
+      padding: 6px 14px;
+      background: linear-gradient(135deg, #f5a623, #e8871e);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.2s;
+      white-space: nowrap;
+    }
+    .btn-upgrade:hover {
+      box-shadow: 0 2px 8px rgba(232, 135, 30, 0.4);
+      transform: scale(1.03);
+    }
   </style>
 </head>
 <body>
@@ -219,6 +288,7 @@
       <h1>Add to Toodledo</h1>
     </div>
     <div class="header-right">
+      <span id="planBadge" class="free-badge">FREE</span>
       <a href="#" id="openOptions">設定</a>
     </div>
   </div>
@@ -229,38 +299,46 @@
     または下の「Web版で追加」をご利用ください。
   </div>
 
+  <!-- アップグレードバナー（Free版のみ表示） -->
+  <div id="upgradeBanner" class="upgrade-banner hidden">
+    <div class="upgrade-banner-text">
+      <strong>Pro</strong> でタグ・期日・優先度・スターを設定可能に
+    </div>
+    <button class="btn-upgrade" id="btnUpgrade">Pro にアップグレード</button>
+  </div>
+
   <!-- モード切替 -->
   <div class="mode-tabs">
     <div class="mode-tab active" data-mode="api">API で追加</div>
     <div class="mode-tab" data-mode="web">Web版で追加</div>
   </div>
 
-  <!-- タスク名 -->
+  <!-- タスク名（Free でも使える） -->
   <div class="field-group">
     <label for="taskTitle">タスク名</label>
     <input type="text" id="taskTitle" placeholder="タスク名を入力…">
   </div>
 
-  <!-- ノート -->
+  <!-- ノート（Free でも使える） -->
   <div class="field-group">
     <label for="taskNote">ノート</label>
     <textarea id="taskNote" placeholder="URL・選択テキストなど"></textarea>
   </div>
 
-  <!-- ★ スタートグル（APIモードのみ） -->
+  <!-- ★ スタートグル（APIモード・Pro限定） -->
   <div class="star-toggle" id="starToggle" title="スターを付ける">
     <span class="star-icon">★</span>
-    <span class="star-label">スター</span>
+    <span class="star-label">スター <span class="pro-tag" style="font-size:9px;color:#e8871e;font-weight:700;">PRO</span></span>
   </div>
 
-  <!-- 期日・優先度（横並び、APIモードのみ） -->
+  <!-- 期日・優先度（横並び、APIモード・Pro限定） -->
   <div class="field-row" id="duePriorityRow">
     <div class="field-group">
-      <label for="taskDueDate">期日</label>
+      <label for="taskDueDate">期日 <span class="pro-tag" style="font-size:9px;color:#e8871e;font-weight:700;">PRO</span></label>
       <input type="date" id="taskDueDate">
     </div>
     <div class="field-group">
-      <label for="taskPriority">優先度</label>
+      <label for="taskPriority">優先度 <span class="pro-tag" style="font-size:9px;color:#e8871e;font-weight:700;">PRO</span></label>
       <select id="taskPriority">
         <option value="-1">⚪ なし (Negative)</option>
         <option value="0" selected>🔵 低 (Low)</option>
@@ -271,9 +349,9 @@
     </div>
   </div>
 
-  <!-- タグ（API モードのみ） -->
+  <!-- タグ（API モード・Pro限定） -->
   <div class="field-group" id="tagGroup">
-    <label for="taskTag">タグ（カンマ区切り）</label>
+    <label for="taskTag">タグ（カンマ区切り）<span class="pro-tag" style="font-size:9px;color:#e8871e;font-weight:700;">PRO</span></label>
     <input type="text" id="taskTag" placeholder="例: chrome, web-clip">
   </div>
 
@@ -298,6 +376,8 @@
   <!-- ステータス -->
   <div id="status" class="status"></div>
 
+  <script src="ExtPay.js"></script>
+  <script src="license.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

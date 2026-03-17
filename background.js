@@ -1,7 +1,10 @@
 // background.js — Service Worker
-// Toodledo API モジュールを読み込み、ポップアップ/オプションからのメッセージを処理
+// ExtPay（課金）→ ライセンス管理 → Toodledo API の順で読み込み
 
-importScripts('toodledo-api.js');
+importScripts('ExtPay.js', 'license.js', 'toodledo-api.js');
+
+// === ExtPay バックグラウンド初期化（必須・1回だけ呼ぶ） ===
+extpay.startBackground();
 
 /**
  * メッセージハンドラー
@@ -84,6 +87,37 @@ async function handleMessage(request) {
         authenticated: hasTokens,
         configured: hasCredentials,
       };
+    }
+
+    // === ライセンス状態確認（popup/optionsから呼ばれる） ===
+    case 'getLicenseStatus': {
+      // Service Worker内でExtPayインスタンスを再取得（SW制約対応）
+      const ep = ExtPay(EXTPAY_ID);
+      try {
+        const user = await ep.getUser();
+        const proStatus = user.paid === true;
+        // キャッシュ更新
+        cacheLicenseStatus(proStatus, user);
+        return {
+          success: true,
+          isPro: proStatus,
+          email: user.email || null,
+          subscriptionStatus: user.subscriptionStatus || null,
+          subscriptionCancelAt: user.subscriptionCancelAt
+            ? user.subscriptionCancelAt.toISOString()
+            : null,
+        };
+      } catch (e) {
+        // オフライン時はキャッシュから
+        const cached = await getCachedLicenseStatus();
+        return {
+          success: true,
+          isPro: cached.isPro,
+          email: cached.user?.email || null,
+          subscriptionStatus: null,
+          fromCache: true,
+        };
+      }
     }
 
     default:
